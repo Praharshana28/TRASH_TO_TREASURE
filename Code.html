@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Trash to Treasure — Enhanced</title>
+  <style>
+    :root{
+      --bg:#f4f7fb;--card:#fff;--muted:#667085;--accent:#0b76ef;--green:#10b981;
+      --dark-bg:#1e293b;--dark-card:#334155;--dark-text:#f1f5f9;--dark-muted:#94a3b8;
+    }
+    *{box-sizing:border-box}
+    body{font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;margin:0;background:var(--bg);color:#0f1724;transition:background .25s,color .25s}
+    a{text-decoration:none;color:inherit}
+    body.dark{background:var(--dark-bg);color:var(--dark-text)}
+    body.dark .card{background:var(--dark-card)}
+    body.dark header,body.dark footer{background:#0f172a;color:var(--dark-text)}
+
+    header{background:#0b76ef;color:#fff;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:200}
+    header .left{display:flex;align-items:center;gap:18px}
+    header h1{margin:0;font-size:18px;font-weight:700}
+    header nav{display:flex;align-items:center;gap:12px}
+    header nav a, header nav button{background:transparent;border:none;color:inherit;cursor:pointer;font-weight:600;padding:8px;border-radius:8px}
+    header nav button:hover, header nav a:hover{background:rgba(255,255,255,0.08)}
+    #authButtons{display:flex;gap:8px;align-items:center}
+
+    /* Banner Carousel */
+    .banner-container{position:relative;overflow:hidden;width:100%;max-height:420px}
+    .banner-slide{display:flex;transition:transform 0.6s ease-in-out}
+    .banner-item{min-width:100%;position:relative}
+    .banner-item img{width:100%;height:420px;object-fit:cover;display:block}
+    .banner-text{position:absolute;bottom:36px;left:36px;background:rgba(0,0,0,0.45);color:#fff;padding:12px 16px;border-radius:10px;font-size:18px;max-width:60%}
+
+    .banner-dots{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:10}
+    .banner-dots button{width:12px;height:12px;background:#fff;border-radius:50%;opacity:0.6;border:none;cursor:pointer;transition:all .2s}
+    .banner-dots button.active{opacity:1;background:var(--accent);transform:scale(1.1)}
+
+    .banner-arrows{position:absolute;top:50%;left:0;width:100%;display:flex;justify-content:space-between;padding:0 10px;transform:translateY(-50%);z-index:10}
+    .banner-arrows button{background:rgba(0,0,0,0.4);border:none;color:#fff;font-size:20px;padding:8px 10px;border-radius:7px;cursor:pointer}
+    .banner-arrows button:hover{background:rgba(0,0,0,0.65)}
+
+    .hero{background:linear-gradient(135deg,#eef6ff,#f7fbff);padding:28px 20px;text-align:center}
+    .hero h2{font-size:26px;margin:0 0 8px;color:#0b76ef}
+    .hero p{color:var(--muted);max-width:700px;margin:0 auto 12px}
+    .hero .cta{background:var(--accent);color:#fff;padding:10px 18px;border-radius:8px;font-weight:600;display:inline-block}
+
+    .container{max-width:1100px;margin:22px auto;padding:20px}
+    .grid{display:grid;grid-template-columns:1fr 360px;gap:20px}
+    .card{background:var(--card);padding:16px;border-radius:12px;box-shadow:0 6px 18px rgba(11,22,44,0.04)}
+    .items{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+    .item{border-radius:10px;overflow:hidden;border:1px solid #eef2f7;background:#fff;display:flex;flex-direction:column}
+    .item img{height:150px;object-fit:cover;width:100%}
+    .item .body{padding:10px}
+    .item h3{margin:0;font-size:15px}
+    .meta{font-size:12px;color:var(--muted);margin-top:6px}
+    .btn-claim{background:var(--green);color:#fff;padding:8px 10px;border-radius:8px;border:none;transition:0.3s;cursor:pointer}
+    footer{margin-top:40px;text-align:center;color:var(--muted);font-size:13px;padding:16px;background:#f0f4fa}
+
+    /* Help + small things */
+    .help-center {position: fixed;bottom: 20px;right: 20px;background: var(--accent);color: #fff;border: none;border-radius: 50%;width: 60px;height: 60px;display: flex;align-items: center;justify-content: center;font-size: 26px;cursor: pointer;box-shadow: 0 4px 12px rgba(0,0,0,0.2);z-index: 999;}
+    .help-popup {position: fixed;bottom: 90px;right: 20px;background: var(--card);border-radius: 12px;box-shadow: 0 6px 20px rgba(0,0,0,0.15);width: 320px;max-height: 400px;display: none;flex-direction: column;overflow: auto;z-index: 999;}
+    .help-popup header {background: var(--accent);color: #fff;padding: 12px;font-weight: 600;}
+    .help-popup .content {padding: 14px;font-size: 14px;color: var(--muted);}
+
+    /* Modals */
+    .modal-backdrop{position:fixed;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.45);display:none;align-items:center;justify-content:center;z-index:300}
+    .modal{background:var(--card);width:100%;max-width:420px;border-radius:12px;padding:18px;box-shadow:0 12px 40px rgba(2,6,23,0.35)}
+    .modal h3{margin:0 0 10px}
+    .modal .row{display:flex;gap:8px}
+    .modal input, .modal select{width:100%;padding:10px;border-radius:8px;border:1px solid #e6eefc;margin-bottom:10px}
+    .modal button{padding:10px 12px;border-radius:8px;border:none;cursor:pointer}
+    .small{font-size:13px;color:var(--muted)}
+    .nav-username{background:rgba(255,255,255,0.12);padding:6px 10px;border-radius:8px;font-weight:600}
+
+    @media (max-width:900px){ .grid{grid-template-columns:1fr} .banner-item img{height:260px} }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="left">
+      <h1>♻ Trash to Treasure</h1>
+      <nav>
+        <a href="#">Home</a>
+        <a href="#addForm">Add Item</a>
+      </nav>
+    </div>
+
+    <nav id="rightNav">
+      <div id="authButtons">
+        <button id="loginBtn">Login</button>
+        <button id="signupBtn">Sign up</button>
+      </div>
+      <div id="userArea" style="display:none;align-items:center;gap:8px;">
+        <span class="nav-username" id="navUser">User</span>
+        <button id="logoutBtn">Logout</button>
+      </div>
+      <button id="darkToggle" style="margin-left:12px">🌙</button>
+    </nav>
+  </header>
+
+  <!-- Banner -->
+  <div class="banner-container" id="banner">
+    <div class="banner-slide" id="slides">
+      <!-- 5 slides (unique images from Unsplash) -->
+      <div class="banner-item">
+        <img src="https://images.unsplash.com/photo-1603575448361-1f8c8f0f1a3f?q=80&w=2000&auto=format&fit=crop" alt="Clothes reuse">
+        <div class="banner-text">👕 Give Old Clothes a New Life</div>
+      </div>
+      <div class="banner-item">
+        <img src="https://images.unsplash.com/photo-1526318472351-c75fcf070eaa?q=80&w=2000&auto=format&fit=crop" alt="Books sharing">
+        <div class="banner-text">📚 Share Knowledge — Donate Books</div>
+      </div>
+      <div class="banner-item">
+        <img src="https://images.unsplash.com/photo-1581091870622-3d8f6f1a3b5f?q=80&w=2000&auto=format&fit=crop" alt="Electronics recycle">
+        <div class="banner-text">🔌 Recycle Electronics Responsibly</div>
+      </div>
+      <div class="banner-item">
+        <img src="https://images.unsplash.com/photo-1503602642458-232111445657?q=80&w=2000&auto=format&fit=crop" alt="Household donate">
+        <div class="banner-text">🏡 Donate Household Treasures</div>
+      </div>
+      <div class="banner-item">
+        <img src="https://images.unsplash.com/photo-1542831371-d531d36971e6?q=80&w=2000&auto=format&fit=crop" alt="Food donation">
+        <div class="banner-text">🍲 Share Food, Share Happiness</div>
+      </div>
+    </div>
+
+    <div class="banner-dots" id="dots"></div>
+    <div class="banner-arrows">
+      <button id="prev">‹</button>
+      <button id="next">›</button>
+    </div>
+  </div>
+
+  <section class="hero">
+    <h2>Turn Waste into Worth</h2>
+    <p>Donate, share, or recycle items you no longer need. Earn EcoPoints while helping the planet and your community.</p>
+    <a href="#addForm" class="cta">Start Giving</a>
+  </section>
+
+  <div class="container">
+    <div class="grid">
+      <div class="card">
+        <h3>Available Items</h3>
+        <input id="search" placeholder="🔍 Search items..." style="width:100%;padding:8px;border-radius:6px;border:1px solid #ddd;margin-bottom:10px;">
+        <select id="filter" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ddd;margin-bottom:10px;">
+          <option value="all">All Categories</option>
+          <option value="Clothes">Clothes</option>
+          <option value="Books">Books</option>
+          <option value="Electronics">Electronics</option>
+          <option value="Food">Food</option>
+        </select>
+        <div id="items" class="items"></div>
+      </div>
+
+      <aside>
+        <div class="card" id="addForm">
+          <h3>Add New Item</h3>
+          <form id="itemForm">
+            <input type="text" id="itemName" placeholder="Item Name" required>
+            <select id="itemCategory" required>
+              <option value="">Select Category</option>
+              <option>Clothes</option><option>Books</option><option>Electronics</option><option>Food</option>
+            </select>
+            <input type="url" id="itemImage" placeholder="Image URL" required>
+            <button class="btn-claim" type="submit" style="width:100%;">➕ Add Item</button>
+            <div class="small" style="margin-top:8px">You earn <strong>10 EcoPoints</strong> per item. (Login required to save points)</div>
+          </form>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <footer>🌍 Trash to Treasure — Turning Waste into Worth.</footer>
+
+  <!-- Help -->
+  <button class="help-center" id="helpBtn">❔</button>
+  <div class="help-popup" id="helpPopup">
+    <header>Help Center</header>
+    <div class="content">
+      • How to add an item?<br>Fill the form and click Add Item.<br><br>
+      • How to earn EcoPoints?<br>Sign up and you'll earn 10 points per donation.<br><br>
+      • Make sure items are clean & usable.
+    </div>
+  </div>
+
+  <!-- Modals: Login / Signup -->
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal" id="modalContent">
+      <!-- Dynamic content -->
+    </div>
+  </div>
+
+  <script>
+    /* ---------------- Banner (5 slides) ---------------- */
+    const slides = document.getElementById('slides');
+    const dotsContainer = document.getElementById('dots');
+    const total = slides.children.length;
+    let index = 0;
+    let intervalId = null;
+
+    // create dots
+    for (let i = 0; i < total; i++) {
+      const btn = document.createElement('button');
+      btn.addEventListener('click', () => goTo(i));
+      dotsContainer.appendChild(btn);
+    }
+    const dots = dotsContainer.querySelectorAll('button');
+    function updateDots() { dots.forEach((d, i) => d.classList.toggle('active', i === index)); }
+    function goTo(i) { index = i; slides.style.transform = translateX(${-i * 100}%); updateDots(); resetInterval(); }
+    function next() { index = (index + 1) % total; goTo(index); }
+    function prev() { index = (index - 1 + total) % total; goTo(index); }
+    document.getElementById('next').onclick = next;
+    document.getElementById('prev').onclick = prev;
+    function startInterval() { intervalId = setInterval(() => { index = (index + 1) % total; slides.style.transform = translateX(${-index * 100}%); updateDots(); }, 3000); }
+    function resetInterval() { if (intervalId) clearInterval(intervalId); startInterval(); }
+
+    // pause on hover (nice UX)
+    const banner = document.getElementById('banner');
+    banner.addEventListener('mouseenter', () => { if (intervalId) clearInterval(intervalId); });
+    banner.addEventListener('mouseleave', () => { resetInterval(); });
+
+    // initialize
+    goTo(0);
+    startInterval();
+
+    /* ---------------- Dark Mode (persist) ---------------- */
+    const darkToggle = document.getElementById('darkToggle');
+    if (localStorage.getItem('darkMode') === 'true') { document.body.classList.add('dark'); darkToggle.textContent = '☀'; }
+    darkToggle.addEventListener('click', () => {
+      document.body.classList.toggle('dark');
+      const dark = document.body.classList.contains('dark');
+      darkToggle.textContent = dark ? '☀' : '🌙';
+      localStorage.setItem('darkMode', dark);
+    });
+
+    /* ---------------- Simple Auth (localStorage) ---------------- */
+    const loginBtn = document.getElementById('loginBtn');
+    const signupBtn = document.getElementById('signupBtn');
+    const modalBackdrop = document.getElementById('modalBackdrop');
+    const modalContent = document.getElementById('modalContent');
+    const authButtons = document.getElementById('authButtons');
+    const userArea = document.getElementById('userArea');
+    const navUser = document.getElementById('navUser');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const helpBtn = document.getElementById('helpBtn');
+    const helpPopup = document.getElementById('helpPopup');
+
+    // helper
+    function showModal(html) {
+      modalContent.innerHTML = html;
+      modalBackdrop.style.display = 'flex';
+    }
+    function closeModal() { modalBackdrop.style.display = 'none'; modalContent.innerHTML = ''; }
+
+    // signup flow
+    signupBtn.addEventListener('click', () => {
+      showModal(`
+        <h3>Create account</h3>
+        <input id="su_name" placeholder="Full name" />
+        <input id="su_email" placeholder="Email" />
+        <input id="su_pass" type="password" placeholder="Password" />
+        <div style="display:flex;gap:8px;justify-content:flex-end;">
+          <button id="su_cancel">Cancel</button>
+          <button id="su_create" style="background:var(--accent);color:#fff">Create</button>
+        </div>
+      `);
+      document.getElementById('su_cancel').onclick = closeModal;
+      document.getElementById('su_create').onclick = () => {
+        const name = document.getElementById('su_name').value.trim();
+        const email = document.getElementById('su_email').value.trim().toLowerCase();
+        const pass = document.getElementById('su_pass').value;
+        if (!name || !email || !pass) return alert('Please fill all fields');
+        // simple user store
+        const users = JSON.parse(localStorage.getItem('tt_users') || '{}');
+        if (users[email]) return alert('Email already registered');
+        users[email] = { name, pass, points: 0 };
+        localStorage.setItem('tt_users', JSON.stringify(users));
+        localStorage.setItem('tt_session', email);
+        closeModal();
+        refreshAuthUI();
+        alert('Account created — you are signed in.');
+      };
+    });
+
+    // login flow
+    loginBtn.addEventListener('click', () => {
+      showModal(`
+        <h3>Login</h3>
+        <input id="li_email" placeholder="Email" />
+        <input id="li_pass" type="password" placeholder="Password" />
+        <div style="display:flex;gap:8px;justify-content:flex-end;">
+          <button id="li_cancel">Cancel</button>
+          <button id="li_ok" style="background:var(--accent);color:#fff">Sign in</button>
+        </div>
+        <div class="small" style="margin-top:8px">No backend — this is a local simulated login stored in your browser.</div>
+      `);
+      document.getElementById('li_cancel').onclick = closeModal;
+      document.getElementById('li_ok').onclick = () => {
+        const email = document.getElementById('li_email').value.trim().toLowerCase();
+        const pass = document.getElementById('li_pass').value;
+        const users = JSON.parse(localStorage.getItem('tt_users') || '{}');
+        if (!users[email] || users[email].pass !== pass) return alert('Invalid credentials');
+        localStorage.setItem('tt_session', email);
+        closeModal();
+        refreshAuthUI();
+      };
+    });
+
+    logoutBtn.addEventListener('click', () => {
+      localStorage.removeItem('tt_session');
+      refreshAuthUI();
+    });
+
+    function refreshAuthUI() {
+      const session = localStorage.getItem('tt_session');
+      if (session) {
+        const users = JSON.parse(localStorage.getItem('tt_users') || '{}');
+        const user = users[session] || { name: session };
+        authButtons.style.display = 'none';
+        userArea.style.display = 'flex';
+        navUser.textContent = user.name;
+      } else {
+        authButtons.style.display = 'flex';
+        userArea.style.display = 'none';
+      }
+    }
+    // init auth UI
+    refreshAuthUI();
+
+    modalBackdrop.addEventListener('click', (e) => { if (e.target === modalBackdrop) closeModal(); });
+
+    /* ---------------- Items + Points (persist) ---------------- */
+    const itemsContainer = document.getElementById('items');
+    let items = JSON.parse(localStorage.getItem('items') || '[]');
+
+    function renderItems() {
+      const term = document.getElementById('search').value?.toLowerCase() || '';
+      const filter = document.getElementById('filter').value || 'all';
+      itemsContainer.innerHTML = '';
+      items.filter(it => (filter === 'all' || it.category === filter) && it.name.toLowerCase().includes(term))
+        .forEach((it, idx) => {
+          const div = document.createElement('div');
+          div.className = 'item';
+          div.innerHTML = `
+            <img src="${it.image}" alt="${it.name}">
+            <div class="body">
+              <h3>${it.name}</h3>
+              <div class="meta">${it.category}</div>
+              <div style="margin-top:8px;display:flex;gap:8px;">
+                <button class="btn-claim" data-idx="${idx}">Claim</button>
+              </div>
+            </div>
+          `;
+          itemsContainer.appendChild(div);
+        });
+      // attach claim handlers
+      document.querySelectorAll('.btn-claim').forEach(btn => btn.addEventListener('click', onClaim));
+    }
+
+    function onClaim(e) {
+      const session = localStorage.getItem('tt_session');
+      if (!session) {
+        if (!confirm('You must be logged in to claim an item. Sign up / Login now?')) return;
+        loginBtn.click();
+        return;
+      }
+      const idx = parseInt(e.currentTarget.getAttribute('data-idx'));
+      const claimed = items.splice(idx, 1)[0];
+      localStorage.setItem('items', JSON.stringify(items));
+      // give points to user
+      const users = JSON.parse(localStorage.getItem('tt_users') || '{}');
+      if (users[session]) {
+        users[session].points = (users[session].points || 0) + 5; // claiming gives 5 points
+        localStorage.setItem('tt_users', JSON.stringify(users));
+        alert(You claimed "${claimed.name}". You earned 5 EcoPoints!);
+      } else {
+        alert('Claimed (no points recorded).');
+      }
+      renderItems();
+    }
+
+    document.getElementById('itemForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = document.getElementById('itemName').value.trim();
+      const cat = document.getElementById('itemCategory').value;
+      const img = document.getElementById('itemImage').value.trim();
+      if (!name || !cat || !img) return alert('Please fill all fields');
+      const session = localStorage.getItem('tt_session');
+      // push item
+      items.push({ name, category: cat, image: img, created: Date.now() });
+      localStorage.setItem('items', JSON.stringify(items));
+      // give points if logged in
+      if (session) {
+        const users = JSON.parse(localStorage.getItem('tt_users') || '{}');
+        if (users[session]) {
+          users[session].points = (users[session].points || 0) + 10;
+          localStorage.setItem('tt_users', JSON.stringify(users));
+        }
+      } else {
+        // optional: notify
+      }
+      document.getElementById('itemForm').reset();
+      renderItems();
+      // small confetti
+      simpleConfetti();
+    });
+
+    document.getElementById('search').addEventListener('input', renderItems);
+    document.getElementById('filter').addEventListener('change', renderItems);
+
+    // load initial items
+    renderItems();
+
+    /* ---------------- Help center toggle ---------------- */
+    let helpOpen = false;
+    helpBtn.addEventListener('click', () => {
+      helpOpen = !helpOpen;
+      helpPopup.style.display = helpOpen ? 'block' : 'none';
+    });
+
+    /* ---------------- small confetti ---------------- */
+    function simpleConfetti() {
+      const emojis = ['🎉', '♻', '✨', '💚', '🌍'];
+      for (let i = 0; i < 12; i++) {
+        const s = document.createElement('div');
+        s.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        s.style.position = 'fixed';
+        s.style.left = (10 + Math.random() * 80) + 'vw';
+        s.style.top = '-10px';
+        s.style.fontSize = (12 + Math.random() * 22) + 'px';
+        s.style.zIndex = 9999;
+        document.body.appendChild(s);
+        s.animate([
+          { transform: 'translateY(0) rotate(0deg)', opacity: 1 },
+          { transform: translateY(${window.innerHeight * (0.6 + Math.random() * 0.3)}px) rotate(${Math.random()*360}deg), opacity: 0 }
+        ], { duration: 1800 + Math.random() * 1200, easing: 'linear' });
+        setTimeout(() => s.remove(), 3200);
+      }
+    }
+
+    /* ---------------- small init for demo data (only if none) ---------------- */
+    if (!localStorage.getItem('items')) {
+      const sample = [
+        { name:'Pair of Jeans', category:'Clothes', image:'https://images.unsplash.com/photo-1520975923695-94a52a9b9b5b?q=80&w=1400&auto=format&fit=crop' },
+        { name:'Used Textbooks', category:'Books', image:'https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=1400&auto=format&fit=crop' }
+      ];
+      localStorage.setItem('items', JSON.stringify(sample));
+      items = sample;
+      renderItems();
+    }
+
+    // ensure dots active state at start
+    updateDots();
+  </script>
+</body>
+</html>
